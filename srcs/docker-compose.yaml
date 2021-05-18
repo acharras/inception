@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  nginx:
+    build: requirements/nginx
+    ports:
+      - 443:443
+    container_name: nginx
+    restart: always
+    links:
+      - wordpress
+    extra_hosts:
+      - "aurbuche.42.fr:127.0.0.1"
+
+  mariadb:
+    build: requirements/mariadb
+    ports:
+      - 3306:3306
+    container_name: mariadb
+    volumes:
+      - mariadb_data:/var/lib/mariadb
+    restart:  always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MARIA_ROOT_PASS}
+      MYSQL_DATABASE: wordpress_db
+      MYSQL_USER: ${MARIA_LOGIN}
+      MYSQL_PASSWORD: ${MARIA_PASS}
+
+  wordpress:
+    depends_on:
+      - mariadb
+    build: requirements/wordpress
+    ports:
+      - 9000:9000
+    container_name: wordpress
+    volumes:
+      - wordpress:/var/www/html
+    restart:  always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_ADMIN: ${WP_LOGIN}
+      WORDPRESS_DB_ADMI_PASSWORD: ${WP_PASS}
+      WORDPRESS_DB_1LOGIN: ${WP_1LOGIN}
+      WORDPRESS_DB_1PASS: ${WP_1PASS}
+      WORDPRESS_DB_2LOGIN: ${WP_2LOGIN}
+      WORDPRESS_DB_2PASS: ${WP_2PASS}
+    links:
+      - mariadb
+
+volumes:
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o:  'bind'
+      device: ${PWD}/requirements/mariadb/
+  wordpress:
+    driver: local
+    driver_opts:
+      type: none
+      o:  'bind'
+      device: ${PWD}/requirements/wordpress
